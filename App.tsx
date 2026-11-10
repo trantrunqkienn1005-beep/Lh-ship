@@ -110,8 +110,8 @@ export default function App() {
     return <Card key={item.id}>
       <View style={s.row}><Text style={s.heading}>{item.id.slice(-8).toUpperCase()} · {item.orderName}</Text><Text style={s.status}>{item.status}</Text></View>
       <ScrollView horizontal>{item.photoUrls?.map((url, i) => <Image key={i} source={{ uri: url }} style={s.photo} />)}</ScrollView>
-      <Text style={s.text}>Người đặt: {item.customerName} {(driver || isAdmin || item.customerId === user?.uid) ? `· ${privateInfo[item.id]?.customerPhone || ""}` : ""}</Text>
-      <Text style={s.text}>Người nhận: {item.recipientName} {(driver || isAdmin || item.customerId === user?.uid) ? `· ${privateInfo[item.id]?.recipientPhone || ""}` : ""}</Text>
+      <Text style={s.text}>Người đặt: {item.customerName} {(driver || isAdmin || item.customerId === user?.id) ? `· ${privateInfo[item.id]?.customerPhone || ""}` : ""}</Text>
+      <Text style={s.text}>Người nhận: {item.recipientName} {(driver || isAdmin || item.customerId === user?.id) ? `· ${privateInfo[item.id]?.recipientPhone || ""}` : ""}</Text>
       <Text style={s.text}>Lấy: {item.pickupAddress}</Text><Text style={s.text}>Giao: {item.deliveryAddress}</Text>
       <Text style={s.text}>Khoảng cách: {item.distanceKm} km · Phí: {money(item.deliveryFee)}</Text>
       <Text style={s.text}>Thanh toán: {item.paymentMethod} · COD: {money(item.codAmount)}</Text>
