@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "LH Ship",
+    "slug": "lh-ship",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": { "bundleIdentifier": "vn.lhship.app", "supportsTablet": false },
+    "android": { "package": "vn.lhship.app", "versionCode": 1 },
+    "plugins": [
+      ["expo-image-picker", {
+        "photosPermission": "LH Ship cần truy cập ảnh để tải hình ảnh đơn hàng và ảnh đại diện tài xế.",
+        "cameraPermission": "LH Ship cần dùng camera để chụp ảnh đơn hàng."
+      }]
+    ]
+  }
+}

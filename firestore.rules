@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function admin() { return signedIn() && request.auth.token.admin == true; }
+    function approved() {
+      return signedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "approved";
+    }
+    function driver() {
+      return approved() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ["shipper_internal", "shipper_freelance"];
+    }
+    match /users/{uid} {
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.role == "pending"
+        && request.resource.data.status == "pending"
+        && request.resource.data.requestedRole in ["customer", "shipper_internal", "shipper_freelance"];
+      allow read: if signedIn() && (request.auth.uid == uid || admin());
+      allow update, delete: if admin();
+    }
+    match /orders/{orderId} {
+      allow create: if approved()
+        && request.resource.data.customerId == request.auth.uid
+        && request.resource.data.status == "open"
+        && request.resource.data.photoUrls.size() >= 1
+        && request.resource.data.photoUrls.size() <= 3
+        && request.resource.data.deliveryFee == math.ceil(request.resource.data.distanceKm) * 4000
+        && request.resource.data.keys().hasAll(["orderName","photoUrls","customerId","customerName","recipientName","pickupAddress","deliveryAddress","distanceKm","deliveryFee","paymentMethod","codAmount","status","createdAt","updatedAt"]);
+      allow read: if admin() || (approved() && resource.data.customerId == request.auth.uid) ||
+        (driver() && (resource.data.status == "open" || resource.data.driverId == request.auth.uid));
+      allow update, delete: if admin();
+    }
+    match /orderPrivate/{orderId} {
+      allow create: if approved()
+        && request.resource.data.customerId == request.auth.uid
+        && request.resource.data.keys().hasOnly(["customerId","customerPhone","recipientPhone","createdAt"]);
+      allow read: if admin() ||
+        (approved() && resource.data.customerId == request.auth.uid) ||
+        (driver() && get(/databases/$(database)/documents/orders/$(orderId)).data.driverId == request.auth.uid);
+      allow update, delete: if admin();
+    }
+  }
+}
