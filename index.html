@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>HÀNH LANG BÍ MẬT — Bản dựng mới</title>
+<style>
+:root{--gold:#d9b56d;--panel:rgba(8,12,19,.88);--line:rgba(255,255,255,.18)}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090d13;color:#fff;font-family:Arial,Helvetica,sans-serif}
+#game{position:fixed;inset:0}canvas{display:block;width:100%;height:100%}
+#vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.58) 100%)}
+#top{position:fixed;top:env(safe-area-inset-top,12px);left:14px;right:14px;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
+.brand{font-size:12px;letter-spacing:3px;color:#e6c98f;text-shadow:0 2px 8px #000}
+#objective{font-size:12px;color:#e8e3d8;background:rgba(0,0,0,.42);border:1px solid var(--line);padding:9px 12px;border-radius:12px;max-width:60%;text-align:right}
+#hint{position:fixed;left:50%;top:55%;transform:translate(-50%,-50%);padding:9px 13px;border-radius:20px;background:rgba(0,0,0,.55);border:1px solid var(--line);font-size:12px;color:#eee;display:none;white-space:nowrap}
+#cross{position:fixed;left:50%;top:50%;width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 7px #fff;opacity:.55;pointer-events:none}
+#dialogue{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(760px,calc(100% - 28px));background:linear-gradient(145deg,rgba(8,12,19,.96),rgba(18,23,31,.94));border:1px solid rgba(217,181,109,.55);border-radius:16px;padding:16px 18px;box-shadow:0 14px 45px #0009;display:none}
+#speaker{font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:8px}
+#line{font-size:16px;line-height:1.5;min-height:48px}
+#dialogActions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+button{background:#d9b56d;color:#17130b;border:0;border-radius:10px;padding:10px 14px;font-weight:700;font-size:13px}
+button.secondary{background:rgba(255,255,255,.1);color:white;border:1px solid var(--line)}
+#mobile{position:fixed;inset:auto 0 18px 0;display:none;pointer-events:none}
+#stick{position:absolute;left:20px;bottom:10px;width:116px;height:116px;border-radius:50%;background:#ffffff18;border:1px solid #ffffff55;pointer-events:auto;touch-action:none}
+#nub{position:absolute;left:35px;top:35px;width:46px;height:46px;border-radius:50%;background:#ffffff66;border:1px solid #ffffffaa}
+#mobileBtns{position:absolute;right:18px;bottom:12px;display:flex;gap:10px;pointer-events:auto}
+#mobileBtns button{width:66px;height:66px;border-radius:50%;background:#d9b56dE8}
+#start{position:fixed;inset:0;background:linear-gradient(180deg,rgba(4,7,12,.74),rgba(4,7,12,.95)),radial-gradient(ellipse at 50% 30%,#34404b,#090d13 70%);display:flex;align-items:center;justify-content:center;padding:22px}
+#startCard{width:min(560px,100%);text-align:center;border:1px solid #d9b56d66;background:#080c13d9;border-radius:22px;padding:30px 24px;box-shadow:0 24px 80px #000b}
+#start h1{font-size:clamp(28px,7vw,48px);letter-spacing:3px;margin:0;color:#e6c98f}
+#start .sub{color:#c8c5be;line-height:1.6;font-size:14px;margin:14px 0 22px}
+#start small{display:block;color:#9ca3ad;line-height:1.5;margin-top:15px}
+#loading{color:#b7b2a7;font-size:12px;margin-top:10px}
+@media(max-width:700px){#mobile{display:block}#objective{font-size:10px}.brand{font-size:10px}#line{font-size:14px}#dialogue{bottom:calc(150px + env(safe-area-inset-bottom))}}
+</style>
+</head>
+<body>
+<div id="game"></div><div id="vignette"></div><div id="cross"></div>
+<div id="top"><div class="brand">HÀNH LANG BÍ MẬT</div><div id="objective">NHIỆM VỤ · Tìm chìa khóa phòng thí nghiệm</div></div>
+<div id="hint">Nhấn E hoặc TƯƠNG TÁC để tiếp tục</div>
+<div id="dialogue"><div id="speaker">MINH</div><div id="line"></div><div id="dialogActions"><button class="secondary" id="mute">Tắt giọng đọc</button><button id="next">Tiếp tục</button></div></div>
+<div id="mobile"><div id="stick"><div id="nub"></div></div><div id="mobileBtns"><button id="look">NHÌN</button><button id="interact">NÓI</button></div></div>
+<div id="start"><div id="startCard"><h1>HÀNH LANG<br>BÍ MẬT</h1><div class="sub">Một đêm. Một ngôi trường bị khóa.<br>Và bí mật mà không ai muốn bạn tìm ra.</div><button id="play">BẮT ĐẦU KHÁM PHÁ</button><small>Bản dựng nền tảng mới · Góc nhìn thứ nhất<br>Máy tính: WASD / phím mũi tên, rê chuột, E để tương tác.<br>Điện thoại: joystick bên trái, kéo màn hình để nhìn, nút NÓI để tương tác.</small><div id="loading"></div></div></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+const mount=document.querySelector('#game');
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x101923); scene.fog=new THREE.Fog(0x101923,18,48);
+const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.1,100); camera.position.set(0,1.68,7);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.7)); renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
+mount.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xb8c9df,0x24202a,1.2));
+const key=new THREE.DirectionalLight(0xffdca8,2.0); key.position.set(-4,8,4); key.castShadow=true; key.shadow.mapSize.set(1024,1024); scene.add(key);
+const fill=new THREE.PointLight(0x8db9ff,18,18); fill.position.set(0,3,-7); scene.add(fill);
+const warm=new THREE.PointLight(0xffc56e,28,12); warm.position.set(-3,2.8,2); scene.add(warm);
+
+const mat=(c,r=.8,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
+const floorMat=mat(0x45484a,.92), wallMat=mat(0xaaa69b), darkMat=mat(0x252a31), wood=mat(0x644a35), deskTop=mat(0x8a6b4d), metal=mat(0x525b64,.35,.65), glass= new THREE.MeshStandardMaterial({color:0x7c9eaa,roughness:.2,metalness:.1,transparent:true,opacity:.32});
+function box(w,h,d,material,x,y,z,shadow=true){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);o.position.set(x,y,z);o.castShadow=shadow;o.receiveShadow=true;scene.add(o);return o}
+function cylinder(rt,rb,h,material,x,y,z){const o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,18),material);o.position.set(x,y,z);o.castShadow=true;scene.add(o);return o}
+
+// Classroom and corridor shell
+box(30,.25,42,floorMat,0,-.15,-8);
+box(30,.3,42,darkMat,0,4.2,-8,false);
+box(30,4.4,.35,wallMat,0,2,-29);
+box(30,4.4,.35,wallMat,0,2,13);
+box(.35,4.4,42,wallMat,-15,2,-8); box(.35,4.4,42,wallMat,15,2,-8);
+for(let z=-25;z<10;z+=6){
+  box(2.4,2.5,.18,wood,-14.78,1.65,z);
+  box(2.1,2.2,.08,glass,-14.62,1.7,z);
+  box(2.4,2.5,.18,wood,14.78,1.65,z);
+  box(2.1,2.2,.08,glass,14.62,1.7,z);
+  const lamp= new THREE.PointLight(0xffdba3,10,9); lamp.position.set(0,3.7,z); scene.add(lamp);
+}
+// ceiling light panels
+for(let z=-25;z<10;z+=6){box(2.2,.08,1.2,mat(0xf4e4bd,.4),0,4,z,false)}
+// classroom desks, chairs, blackboard
+for(let row=0;row<3;row++)for(let col=0;col<3;col++){
+ const x=-4+col*4, z=-10+row*4;
+ box(2,.16,1.1,deskTop,x,.95,z);
+ for(const dx of [-.82,.82])for(const dz of [-.38,.38])cylinder(.055,.055,.9,metal,x+dx,.45,z+dz);
+ box(.9,.12,.8,wood,x,1.8,z+1.25);
+ box(.95,.12,.12,wood,x,1.35,z+1.62);
+}
+box(8,2.1,.16,darkMat,0,2,-27.9);
+box(7.7,.04,.02,mat(0x82918d),0,3,-27.78,false);
+// lab door
+box(2.1,3,.2,wood,0,1.5,-28.1);
+box(1.85,2.75,.06,mat(0x1b2730),0,1.5,-27.96);
+box(.12,.12,.12,mat(0xd9b56d,.3,.6),.78,1.45,-27.82);
+// posters
+for(let i=0;i<4;i++){box(1.2,1.5,.06,mat([0x526b72,0x75604b,0x46556d,0x6a514d][i]),-10+i*6,2.5,-27.7,false)}
+
+// Simple detailed stand-in character: deliberately replaceable by production GLB models.
+function makePerson(x,y,z,shirt,skin,hair,scale=1){
+ const g=new THREE.Group(); g.position.set(x,y,z); g.scale.setScalar(scale); scene.add(g);
+ const sm=mat(skin,.75), hm=mat(hair,.85), cloth=mat(shirt,.85), pants=mat(0x202b38,.9), shoes=mat(0x17191d);
+ const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.29,.62,5,10),cloth); torso.position.y=1.12; torso.castShadow=true;g.add(torso);
+ const neck=new THREE.Mesh(new THREE.CylinderGeometry(.09,.1,.18,12),sm);neck.position.y=1.62;g.add(neck);
+ const head=new THREE.Mesh(new THREE.SphereGeometry(.23,24,18),sm);head.position.y=1.88;head.scale.set(.86,1.12,.9);head.castShadow=true;g.add(head);
+ const haircap=new THREE.Mesh(new THREE.SphereGeometry(.238,24,14,0,Math.PI*2,0,Math.PI*.55),hm);haircap.position.set(0,2.0,-.015);haircap.scale.set(1,1,.98);g.add(haircap);
+ for(const ex of [-.085,.085]){const eye=new THREE.Mesh(new THREE.SphereGeometry(.025,10,8),mat(0x17191d));eye.position.set(ex,1.91,.198);g.add(eye)}
+ const legs=[];
+ for(const lx of [-.13,.13]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.55,4,8),pants);leg.position.set(lx,.48,0);leg.castShadow=true;g.add(leg);legs.push(leg);
+ const shoe=new THREE.Mesh(new THREE.BoxGeometry(.2,.11,.34),shoes);shoe.position.set(lx,.12,.07);g.add(shoe)}
+ for(const ax of [-.37,.37]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.085,.52,4,8),cloth);arm.position.set(ax,1.12,0);arm.rotation.z=ax<0?-.12:.12;g.add(arm)}
+ return {group:g,legs};
+}
+const lan=makePerson(-1.8,0,-5.5,0x7b2931,0xd5a17f,0x251c19,1);
+const nam=makePerson(2.2,0,-8,0x344e6b,0xc58c69,0x171513,1.04);
+const teacher=makePerson(0,0,-22,0x4b4c53,0xc99572,0x24201c,1.08);
+teacher.group.rotation.y=Math.PI;
+lan.group.rotation.y=-.2; nam.group.rotation.y=.3;
+
+// subtle red emergency light
+const alarm=new THREE.PointLight(0x9c1720,0,12);alarm.position.set(13,3,-20);scene.add(alarm);
+
+const keys={};let started=false,dialogueOpen=false,dialogueIndex=0,lookMode=false,muted=false,foundKey=false;
+const dialogue=[
+ {who:'LAN',text:'Minh… cậu chắc chắn muốn vào đây chứ? Bảo vệ vừa đi qua hành lang.'},
+ {who:'MINH',text:'Tớ nghe tiếng động phát ra từ phòng thí nghiệm. Có thứ gì đó không ổn.'},
+ {who:'NAM',text:'Dừng lại! Cánh cửa đó bị niêm phong từ năm ngoái. Không ai được phép mở nó!'},
+ {who:'LAN',text:'Vậy tại sao… đèn bên trong vẫn đang bật?'},
+ {who:'MINH',text:'Nhìn dưới chân cửa kìa. Có một chiếc chìa khóa.'},
+ {who:'NAM',text:'Đừng nhặt nó! Tớ có cảm giác chúng ta không phải những người duy nhất ở đây…'}
+];
+const $=s=>document.querySelector(s);
+function speak(text){if(muted||!('speechSynthesis'in window))return; speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='vi-VN';u.rate=.88;u.pitch=.88;const voices=speechSynthesis.getVoices();const v=voices.find(v=>v.lang.toLowerCase().startsWith('vi'));if(v)u.voice=v;speechSynthesis.speak(u)}
+function showDialogue(){dialogueOpen=true;$('#dialogue').style.display='block';renderLine()}
+function renderLine(){const d=dialogue[Math.min(dialogueIndex,dialogue.length-1)];$('#speaker').textContent=d.who;$('#line').textContent=d.text;speak(d.text);$('#next').textContent=dialogueIndex===dialogue.length-1?'Kết thúc đoạn phim':'Tiếp tục'}
+function nextLine(){if(!dialogueOpen)return;if(dialogueIndex<dialogue.length-1){dialogueIndex++;renderLine()}else{$('#dialogue').style.display='none';dialogueOpen=false;foundKey=true;$('#objective').textContent='NHIỆM VỤ · Tìm cách mở cửa phòng thí nghiệm';alarm.intensity=2.5}}
+$('#next').onclick=nextLine;$('#mute').onclick=()=>{muted=!muted;$('#mute').textContent=muted?'Bật giọng đọc':'Tắt giọng đọc';if(muted)speechSynthesis.cancel()};
+function interact(){if(!started)return;if(dialogueOpen){nextLine();return}const p=camera.position;const d=Math.hypot(p.x-(-1.8),p.z-(-5.5));if(d<4||Math.hypot(p.x-2.2,p.z+8)<4){showDialogue();return}if(p.z<-23&&Math.abs(p.x)<3){$('#hint').style.display='block';$('#hint').textContent=foundKey?'Cánh cửa vẫn khóa. Cần tìm cách mở.':'Có vẻ cần một chiếc chìa khóa.';setTimeout(()=>$('#hint').style.display='none',1800)}}
+window.addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='KeyE')interact()});window.addEventListener('keyup',e=>keys[e.code]=false);
+let yaw=0,pitch=0;let dragging=false,lastX=0,lastY=0;
+renderer.domElement.addEventListener('click',()=>{if(started&&innerWidth>700&&renderer.domElement.requestPointerLock)renderer.domElement.requestPointerLock()});
+document.addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement){yaw-=e.movementX*.0022;pitch-=e.movementY*.0018;pitch=Math.max(-1.15,Math.min(1.15,pitch))}});
+renderer.domElement.addEventListener('touchstart',e=>{if(!started||e.target.closest('button'))return;const t=e.touches[0];dragging=true;lastX=t.clientX;lastY=t.clientY},{passive:true});
+renderer.domElement.addEventListener('touchmove',e=>{if(!dragging)return;const t=e.touches[0];yaw-=(t.clientX-lastX)*.006;pitch-=(t.clientY-lastY)*.004;pitch=Math.max(-1.1,Math.min(1.1,pitch));lastX=t.clientX;lastY=t.clientY},{passive:true});
+renderer.domElement.addEventListener('touchend',()=>dragging=false);
+$('#look').addEventListener('touchstart',()=>lookMode=true);$('#look').addEventListener('touchend',()=>lookMode=false);
+let joy={x:0,y:0};const stick=$('#stick'),nub=$('#nub');
+function joyMove(e){const r=stick.getBoundingClientRect(),t=e.touches[0];let dx=t.clientX-(r.left+r.width/2),dy=t.clientY-(r.top+r.height/2),len=Math.hypot(dx,dy),max=37;if(len>max){dx=dx/len*max;dy=dy/len*max}joy.x=dx/max;joy.y=dy/max;nub.style.transform=`translate(${dx}px,${dy}px)`}
+stick.addEventListener('touchstart',e=>{e.preventDefault();joyMove(e)},{passive:false});stick.addEventListener('touchmove',e=>{e.preventDefault();joyMove(e)},{passive:false});stick.addEventListener('touchend',()=>{joy={x:0,y:0};nub.style.transform='translate(0,0)'});
+$('#interact').onclick=interact;
+$('#play').onclick=()=>{$('#start').style.display='none';started=true;$('#loading').textContent='';if(innerWidth>700&&renderer.domElement.requestPointerLock)renderer.domElement.requestPointerLock();};
+function update(dt){
+ if(!started||dialogueOpen)return;
+ const forward=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-joy.y;
+ const side=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x;
+ const v=new THREE.Vector3(side,0,-forward);if(v.lengthSq()>1)v.normalize();
+ const speed=dt*3.6;const dir=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));const right=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));
+ camera.position.addScaledVector(dir,v.z*speed);camera.position.addScaledVector(right,v.x*speed);
+ camera.position.x=THREE.MathUtils.clamp(camera.position.x,-13.8,13.8);camera.position.z=THREE.MathUtils.clamp(camera.position.z,-27,11);
+ camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;
+ const near=Math.min(Math.hypot(camera.position.x+1.8,camera.position.z+5.5),Math.hypot(camera.position.x-2.2,camera.position.z+8));
+ $('#hint').style.display=near<3.3?'block':'none';
+ if(near<3.3)$('#hint').textContent='Nhấn E hoặc NÓI để trò chuyện';
+}
+let prev=performance.now();function animate(now){requestAnimationFrame(animate);const dt=Math.min((now-prev)/1000,.04);prev=now;update(dt);const t=now*.001;lan.group.position.y=Math.sin(t*2)*.018;nam.group.position.y=Math.sin(t*1.7+1)*.018;teacher.group.position.y=Math.sin(t*1.3)*.012;renderer.render(scene,camera)}requestAnimationFrame(animate);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7))});
+</script>
+</body></html>
